@@ -30,12 +30,21 @@ A `project.yaml` file that lists which modules you want and what values to give 
 ---
 
 ## Project Structure
-To help contributors navigate the repository:
-*   [**`cmd/`**](cmd/README.md): CLI entry points (the `keelo` binary).
-*   [**`internal/`**](internal/README.md): Core private business logic (CLI routing, Config, Merging, Modules, Templates).
-*   [**`pkg/`**](pkg/README.md): Public shared types (`ProjectConfig`, `ModuleDefinition`).
+To help contributors navigate the repository, here is a breakdown of the core directories and the essential files living in the root:
+
+### Core Directories
+*   [**`cmd/`**](cmd/README.md): CLI entry points (the `keelo` binary). *See the directory's README for file details.*
+*   [**`internal/`**](internal/README.md): Core private business logic (CLI routing, Config, Merging, Modules, Templates). *See the directory's README for file details.*
+*   [**`pkg/`**](pkg/README.md): Public shared types (`ProjectConfig`, `ModuleDefinition`). *See the directory's README for file details.*
 *   [**`examples/`**](examples/README.md): Demo projects showcasing Keelo's capabilities.
-*   [**`CONTRIBUTING.md`**](CONTRIBUTING.md): Guidelines for developers who want to contribute code or modules.
+
+### Root Files
+*   **`.github/workflows/`**: Contains our CI/CD pipelines. Includes `release.yml` (for cutting multi-platform binaries) and `test.yml` (for running PR tests).
+*   **`.gitignore`**: Excludes raw binaries, temporary logs, and dynamic IDE files.
+*   **`.goreleaser.yaml`**: The configuration file that tells GoReleaser how to build, package, and distribute the CLI across Homebrew, Scoop, and standard archives.
+*   **`CONTRIBUTING.md`**: Community guidelines for contributing, writing tests, and opening PRs.
+*   **`README.md`**: This file! The ultimate guide to Keelo.
+*   **`go.mod` / `go.sum`**: Go's package tracking files. Defines the external dependencies required to run Keelo (e.g., Cobra, Viper, go-getter).
 
 ---
 
