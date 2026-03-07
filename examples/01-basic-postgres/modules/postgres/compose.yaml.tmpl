@@ -1,13 +1,17 @@
+# Postgres basic configuration
 services:
+  # The database service
   db-{{ .ProjectName }}:
     image: postgres:15-alpine
-    restart: always
+    restart: always # Always restart on crash
     environment:
       POSTGRES_USER: {{ .Values.POSTGRES_USER }}
       POSTGRES_PASSWORD: {{ .Values.POSTGRES_PASSWORD }}
       POSTGRES_DB: {{ .Values.POSTGRES_DB }}
     volumes:
+      # Mount the data directory
       - pgdata:/var/lib/postgresql/data
 
+# Volume declarations
 volumes:
   pgdata:
