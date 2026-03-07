@@ -1,0 +1,5 @@
+services:
+  app-{{ .ProjectName }}:
+    image: my-app:{{ .Values.IMAGE_TAG }}
+    deploy:
+      replicas: {{ .Values.REPLICAS }}
