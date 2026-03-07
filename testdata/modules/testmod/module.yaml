@@ -1,0 +1,11 @@
+name: testmod
+version: "1.0.0"
+description: "A test module for e2e testing"
+inputs:
+  IMAGE_TAG:
+    type: string
+    required: true
+  REPLICAS:
+    type: int
+    default: 1
+    required: false
