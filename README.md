@@ -109,9 +109,11 @@ volumes:
 ### 2. Assembly your Project
 Now, instead of writing 15 lines of Postgres YAML, you just "call" your module in `project.yaml`.
 
+Run the interactive `init` command to bootstrap your configuration:
 ```bash
 keelo init my-awesome-app
 ```
+*The CLI will ask you for a starting template (e.g. Basic Web Service, Full Stack). Follow the prompts to automatically generate your `project.yaml`.*
 
 Modify **`project.yaml`**:
 ```yaml
