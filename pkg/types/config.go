@@ -9,5 +9,6 @@ type ProjectConfig struct {
 // ModuleNode represents a single module declaration within the project config.
 type ModuleNode struct {
 	Name   string                 `yaml:"name"`
+	Source string                 `yaml:"source,omitempty"`
 	Values map[string]interface{} `yaml:"values"`
 }
