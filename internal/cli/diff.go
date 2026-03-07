@@ -30,7 +30,8 @@ var diffCmd = &cobra.Command{
 		}
 
 		// 2. Load and Render Modules (In-Memory)
-		loader := modules.NewLoader("modules", ".keelo/cache")
+		forceRefresh, _ := cmd.Flags().GetBool("force-refresh")
+		loader := modules.NewLoader("modules", ".keelo/cache", forceRefresh)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)
@@ -103,5 +104,6 @@ var diffCmd = &cobra.Command{
 
 func init() {
 	diffCmd.Flags().StringP("config", "c", "project.yaml", "Path to project configuration file")
+	diffCmd.Flags().Bool("force-refresh", false, "Force re-download of remote modules, bypassing cache")
 	rootCmd.AddCommand(diffCmd)
 }

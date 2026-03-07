@@ -28,7 +28,8 @@ var renderCmd = &cobra.Command{
 		}
 
 		// Load Modules
-		loader := modules.NewLoader("modules", ".keelo/cache")
+		forceRefresh, _ := cmd.Flags().GetBool("force-refresh")
+		loader := modules.NewLoader("modules", ".keelo/cache", forceRefresh)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)
@@ -73,5 +74,6 @@ var renderCmd = &cobra.Command{
 func init() {
 	renderCmd.Flags().StringVarP(&renderOutput, "output", "o", compose.DefaultOutputFileName(), "Path to write the generated Compose file")
 	renderCmd.Flags().StringVarP(&renderConfigPath, "config", "c", "project.yaml", "Path to the project configuration file")
+	renderCmd.Flags().Bool("force-refresh", false, "Force re-download of remote modules, bypassing cache")
 	rootCmd.AddCommand(renderCmd)
 }
