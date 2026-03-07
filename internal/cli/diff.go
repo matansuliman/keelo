@@ -52,7 +52,7 @@ var diffCmd = &cobra.Command{
 			fragments = append(fragments, rendered)
 		}
 
-		newContent, err := merger.MergeComposeFragments(fragments)
+		newContent, err := merger.MergeComposeFragments(fragments, cfg.Mixins)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error merging compose files: %v\n", err)
 			os.Exit(1)

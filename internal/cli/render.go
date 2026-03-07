@@ -60,7 +60,7 @@ var renderCmd = &cobra.Command{
 		}
 
 		// Merging
-		mergedOutput, err := merger.MergeComposeFragments(fragments)
+		mergedOutput, err := merger.MergeComposeFragments(fragments, cfg.Mixins)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Merge error: %v\n", err)
 			os.Exit(1)
