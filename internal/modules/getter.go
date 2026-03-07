@@ -22,10 +22,17 @@ func NewDownloader(cacheDir string) *Downloader {
 }
 
 // Download fetches a remote module into the local cache and returns the path to it.
-func (d *Downloader) Download(source string) (string, error) {
+func (d *Downloader) Download(source string, forceRefresh bool) (string, error) {
 	// Generate a stable hash using the source URL
 	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(source)))[:12]
 	dst := filepath.Join(d.cacheDir, hash)
+
+	// If force refresh is requested, wipe the existing cached module directory
+	if forceRefresh {
+		if err := os.RemoveAll(dst); err != nil {
+			return "", fmt.Errorf("failed to clear cache for force-refresh: %w", err)
+		}
+	}
 
 	// Verify if the module is already in cache
 	if _, err := os.Stat(dst); err == nil {

@@ -20,22 +20,21 @@ var diffCmd = &cobra.Command{
 	Use:   "diff",
 	Short: "Show differences between current and potential generated output",
 	Long:  `Renders the project in-memory and compares it with the existing docker-compose.generated.yaml file.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		configPath, _ := cmd.Flags().GetString("config")
 
 		// 1. Load Project Config
 		cfg, err := config.LoadProjectConfig(configPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading project config: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("loading project config: %w", err)
 		}
 
 		// 2. Load and Render Modules (In-Memory)
-		loader := modules.NewLoader("modules", ".keelo/cache")
+		forceRefresh, _ := cmd.Flags().GetBool("force-refresh")
+		loader := modules.NewLoader("modules", ".keelo/cache", forceRefresh)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading modules: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("loading modules: %w", err)
 		}
 
 		var fragments []*types.RenderedModule
@@ -46,16 +45,14 @@ var diffCmd = &cobra.Command{
 			}
 			rendered, err := renderer.RenderModuleTemplate(cfg.Project, &cfg.Modules[i], def)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error rendering module '%s': %v\n", modNode.Name, err)
-				os.Exit(1)
+				return fmt.Errorf("rendering module '%s': %w", modNode.Name, err)
 			}
 			fragments = append(fragments, rendered)
 		}
 
-		newContent, err := merger.MergeComposeFragments(fragments)
+		newContent, err := merger.MergeComposeFragments(fragments, cfg.Mixins)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error merging compose files: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("merging compose files: %w", err)
 		}
 
 		// Add header to match the on-disk format
@@ -68,10 +65,9 @@ var diffCmd = &cobra.Command{
 			if os.IsNotExist(err) {
 				fmt.Println(color.YellowString("No existing docker-compose.generated.yaml found. Showing full new content:"))
 				fmt.Println(string(newContent))
-				return
+				return nil
 			}
-			fmt.Fprintf(os.Stderr, "Error reading existing file: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("reading existing file: %w", err)
 		}
 
 		// 4. Generate Diff
@@ -86,7 +82,7 @@ var diffCmd = &cobra.Command{
 		text, _ := difflib.GetUnifiedDiffString(diff)
 		if text == "" {
 			fmt.Println(color.GreenString("No changes detected."))
-			return
+			return nil
 		}
 
 		// 5. Print with Colors
@@ -102,10 +98,12 @@ var diffCmd = &cobra.Command{
 				fmt.Println(line)
 			}
 		}
+		return nil
 	},
 }
 
 func init() {
 	diffCmd.Flags().StringP("config", "c", "project.yaml", "Path to project configuration file")
+	diffCmd.Flags().Bool("force-refresh", false, "Force re-download of remote modules, bypassing cache")
 	rootCmd.AddCommand(diffCmd)
 }

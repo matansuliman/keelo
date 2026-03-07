@@ -29,24 +29,49 @@ A `project.yaml` file that lists which modules you want and what values to give 
 
 ---
 
+## Project Structure
+To help contributors navigate the repository, here is a breakdown of the core directories and the essential files living in the root:
+
+### Core Directories
+*   [**`cmd/`**](cmd/README.md): CLI entry points (the `keelo` binary). *See the directory's README for file details.*
+*   [**`internal/`**](internal/README.md): Core private business logic (CLI routing, Config, Merging, Modules, Templates). *See the directory's README for file details.*
+*   [**`pkg/`**](pkg/README.md): Public shared types (`ProjectConfig`, `ModuleDefinition`). *See the directory's README for file details.*
+*   [**`examples/`**](examples/README.md): Demo projects showcasing Keelo's capabilities.
+
+### Root Files
+*   **`.github/workflows/`**: Contains our CI/CD pipelines. Includes `release.yml` (for cutting multi-platform binaries) and `test.yml` (for running PR tests).
+*   **`.gitignore`**: Excludes raw binaries, temporary logs, and dynamic IDE files.
+*   **`.goreleaser.yaml`**: The configuration file that tells GoReleaser how to build, package, and distribute the CLI across Homebrew, Scoop, and standard archives.
+*   **`CONTRIBUTING.md`**: Community guidelines for contributing, writing tests, and opening PRs.
+*   **`README.md`**: This file! The ultimate guide to Keelo.
+*   **`go.mod` / `go.sum`**: Go's package tracking files. Defines the external dependencies required to run Keelo (e.g., Cobra, Viper, go-getter).
+
+---
+
 ## Installation
 
-### Via Homebrew (macOS/Linux)
+### macOS & Linux (via Homebrew)
 ```bash
-brew install matansuliman/tap/keelo
+brew tap matansuliman/tap
+brew install keelo
 ```
 
-### From GitHub Releases
-Download the latest binary for your OS from the [Releases](https://github.com/matansuliman/keelo/releases) page.
+### Windows (via Scoop)
+```powershell
+scoop bucket add matansuliman https://github.com/matansuliman/homebrew-tap
+scoop install keelo
+```
+
+### Direct Download (All Platforms)
+Download the latest pre-compiled binary for Windows, macOS, or Linux from the [Releases](https://github.com/matansuliman/keelo/releases) page. Extract the `.tar.gz` or `.zip` file and place the `keelo` executable in your system's PATH.
 
 ### From Source
-Ensure you have [Go](https://go.dev/doc/install) installed (1.20+ recommended).
+Ensure you have [Go](https://go.dev/doc/install) installed (1.24+ recommended).
 
 ```bash
-git clone https://github.com/matansuliman/keelo.git
-cd keelo
-go build -o keelo ./cmd/tool
+go install github.com/matansuliman/keelo/cmd/tool@latest
 ```
+*(This will automatically download, compile, and place the `keelo` binary in your `GOPATH/bin` directory).*
 
 ---
 
@@ -84,9 +109,11 @@ volumes:
 ### 2. Assembly your Project
 Now, instead of writing 15 lines of Postgres YAML, you just "call" your module in `project.yaml`.
 
+Run the interactive `init` command to bootstrap your configuration:
 ```bash
 keelo init my-awesome-app
 ```
+*The CLI will ask you for a starting template (e.g. Basic Web Service, Full Stack). Follow the prompts to automatically generate your `project.yaml`.*
 
 Modify **`project.yaml`**:
 ```yaml
@@ -121,13 +148,6 @@ keelo up
 *   **Centralized Updates**: Update the `postgres` module template once, and every project using it gets the update on the next `render`.
 
 ---
-
-## Roadmap
-*   [x] Phase 1-2: Core Config & Module Loading
-*   [x] Phase 3-4: Template Rendering & YAML Merging
-*   [x] Phase 5-6: Output Generation & Docker Compose Wrappers
-*   [x] Phase 7-8: CLI Polish & E2E Testing
-*   [x] Phase 9: Documentation 🚀
 
 ## License
 MIT

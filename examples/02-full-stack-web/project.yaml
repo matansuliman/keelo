@@ -1,4 +1,13 @@
 project: myapp
+
+mixins:
+  labels:
+    managed-by: "keelo-cli"
+    environment: "production"
+  environment:
+    LOG_LEVEL: "debug"
+    TZ: "UTC"
+
 modules:
   - name: api
     values:
