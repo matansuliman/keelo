@@ -15,18 +15,16 @@ var listModulesCmd = &cobra.Command{
 	Use:   "list-modules",
 	Short: "List all available local modules",
 	Long:  `Scans the modules/ directory and lists the name, version, and description of all local modules found.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		modulesDir := "modules"
 
 		if _, err := os.Stat(modulesDir); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: %s directory not found. Please run this from a directory containing modules.\n", modulesDir)
-			os.Exit(1)
+			return fmt.Errorf("%s directory not found. Please run this from a directory containing modules", modulesDir)
 		}
 
 		entries, err := os.ReadDir(modulesDir)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading %s directory: %v\n", modulesDir, err)
-			os.Exit(1)
+			return fmt.Errorf("reading %s directory: %w", modulesDir, err)
 		}
 
 		loader := modules.NewLoader(modulesDir, ".keelo/cache")
@@ -68,10 +66,11 @@ var listModulesCmd = &cobra.Command{
 
 		if !foundAny {
 			fmt.Println("No modules found.")
-			return
+			return nil
 		}
 
 		w.Flush()
+		return nil
 	},
 }
 
