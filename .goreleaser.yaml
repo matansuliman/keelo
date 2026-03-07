@@ -35,14 +35,14 @@ changelog:
       - "^docs:"
       - "^test:"
 
-brews:
-  - name: keelo
-    repository:
-      owner: matansuliman
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    directory: Formula
-    homepage: "https://github.com/matansuliman/keelo"
-    description: "A modular composition layer for Docker Compose."
-    install: |
-      bin.install "keelo"
+# brews:
+#   - name: keelo
+#     repository:
+#       owner: matansuliman
+#       name: homebrew-tap
+#       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+#     directory: Formula
+#     homepage: "https://github.com/matansuliman/keelo"
+#     description: "A modular composition layer for Docker Compose."
+#     install: |
+#       bin.install "keelo"
