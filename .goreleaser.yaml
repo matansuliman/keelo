@@ -46,3 +46,14 @@ brews:
     description: "A modular composition layer for Docker Compose."
     install: |
       bin.install "keelo"
+
+scoops:
+  - name: keelo
+    repository:
+      owner: matansuliman
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: bucket
+    homepage: "https://github.com/matansuliman/keelo"
+    description: "A modular composition layer for Docker Compose."
+    license: "MIT"
