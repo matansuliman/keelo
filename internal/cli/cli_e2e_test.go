@@ -12,16 +12,25 @@ import (
 func executeCommand(args ...string) (string, error) {
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
+	oldStdin := os.Stdin
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 	os.Stderr = w
+
+	// Pipe simple empty inputs for promptui if it tries to read
+	inR, inW, _ := os.Pipe()
+	inW.Write([]byte("\n\n\n"))
+	inW.Close()
+	os.Stdin = inR
 
 	rootCmd.SetArgs(args)
 	err := rootCmd.Execute()
 
 	w.Close()
+	inR.Close()
 	os.Stdout = oldStdout
 	os.Stderr = oldStderr
+	os.Stdin = oldStdin
 
 	var buf bytes.Buffer
 	buf.ReadFrom(r)
@@ -89,7 +98,7 @@ func TestCLI_Init_ListModules(t *testing.T) {
 	defer os.Chdir(cwd)
 
 	// Test init
-	output, err := executeCommand("init", "test-init")
+	output, err := executeCommand("init", "test-init", "--non-interactive")
 	if err != nil {
 		t.Fatalf("Init command failed: %v\nOutput: %s", err, output)
 	}
