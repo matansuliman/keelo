@@ -29,7 +29,7 @@ var listModulesCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		loader := modules.NewLoader(modulesDir)
+		loader := modules.NewLoader(modulesDir, ".keelo/cache")
 		foundAny := false
 
 		// Use tabwriter for nice alignment

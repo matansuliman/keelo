@@ -34,7 +34,7 @@ inputs:
 		t.Fatalf("Failed to write postgres module.yaml: %v", err)
 	}
 
-	loader := NewLoader(tempDir)
+	loader := NewLoader(tempDir, t.TempDir())
 
 	def, err := loader.LoadModule("postgres")
 	if err != nil {
@@ -71,7 +71,7 @@ name: postgres
 `
 	os.WriteFile(filepath.Join(pgDir, "module.yaml"), []byte(pgYaml), 0644)
 
-	loader := NewLoader(tempDir)
+	loader := NewLoader(tempDir, t.TempDir())
 	cfg := &types.ProjectConfig{
 		Project: "test-proj",
 		Modules: []types.ModuleNode{
