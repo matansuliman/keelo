@@ -29,21 +29,28 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		projectName, err := PromptString("Project Name", defaultName, ValidateNotEmpty)
-		if err != nil {
-			return fmt.Errorf("prompt failed: %w", err)
-		}
+		projectName := defaultName
+		selectedTemplate := "Basic Web Service"
 
-		// 2. Select Template
-		templates := []string{
-			"Empty Template",
-			"Basic Web Service",
-			"Full Stack (Web + Postgres)",
-		}
+		nonInteractive, _ := cmd.Flags().GetBool("non-interactive")
+		if !nonInteractive {
+			var err error
+			projectName, err = PromptString("Project Name", defaultName, ValidateNotEmpty)
+			if err != nil {
+				return fmt.Errorf("prompt failed: %w", err)
+			}
 
-		selectedTemplate, err := PromptSelect("Starting Template", templates)
-		if err != nil {
-			return fmt.Errorf("prompt failed: %w", err)
+			// 2. Select Template
+			templates := []string{
+				"Empty Template",
+				"Basic Web Service",
+				"Full Stack (Web + Postgres)",
+			}
+
+			selectedTemplate, err = PromptSelect("Starting Template", templates)
+			if err != nil {
+				return fmt.Errorf("prompt failed: %w", err)
+			}
 		}
 
 		// 3. Generate YAML based on selection
@@ -84,5 +91,6 @@ modules:
 }
 
 func init() {
+	initCmd.Flags().Bool("non-interactive", false, "Skip interactive prompts and use defaults")
 	rootCmd.AddCommand(initCmd)
 }
