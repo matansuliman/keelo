@@ -30,7 +30,7 @@ volumes:
 `),
 	}
 
-	merged, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2})
+	merged, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
 	if err != nil {
 		t.Fatalf("Expected successful merge, got error: %v", err)
 	}
@@ -69,7 +69,7 @@ services:
 `),
 	}
 
-	_, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2})
+	_, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
 	if err == nil {
 		t.Fatalf("Expected error for service name conflict, got nil")
 	}
@@ -98,12 +98,55 @@ volumes:
 `),
 	}
 
-	_, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2})
+	_, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
 	if err == nil {
 		t.Fatalf("Expected error for volume block conflict, got nil")
 	}
 
 	if !strings.Contains(err.Error(), "conflict detected: volume 'shared-data' is defined multiple times with options") {
 		t.Errorf("Expected conflict error message, got: %v", err)
+	}
+}
+
+func TestMergeComposeFragments_WithMixins(t *testing.T) {
+	frag1 := &types.RenderedModule{
+		ModuleName: "api1",
+		YAML: []byte(`
+services:
+  api:
+    image: api:v1
+    environment:
+      EXISTING: "true"
+`),
+	}
+
+	mixins := &types.ProjectMixins{
+		Labels: map[string]string{
+			"env":        "production",
+			"managed-by": "keelo",
+		},
+		Environment: map[string]string{
+			"GLOBAL_VAR": "injected",
+		},
+	}
+
+	merged, err := MergeComposeFragments([]*types.RenderedModule{frag1}, mixins)
+	if err != nil {
+		t.Fatalf("Expected successful merge, got error: %v", err)
+	}
+
+	output := string(merged)
+
+	// Check Labels Injection
+	if !strings.Contains(output, "env: production") || !strings.Contains(output, "managed-by: keelo") {
+		t.Errorf("Mixins labels were not correctly injected into the output:\n%s", output)
+	}
+
+	// Check Env Injection and Existing Preservation
+	if !strings.Contains(output, "GLOBAL_VAR: injected") {
+		t.Errorf("Mixins environment was not correctly injected into the output:\n%s", output)
+	}
+	if !strings.Contains(output, "EXISTING: \"true\"") && !strings.Contains(output, "EXISTING: 'true'") && !strings.Contains(output, "EXISTING: true") {
+		t.Errorf("Existing environment variable was lost during mixin injection:\n%s", output)
 	}
 }
