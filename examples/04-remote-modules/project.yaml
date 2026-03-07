@@ -1,0 +1,6 @@
+project: remote-demo
+modules:
+  - name: my-remote-mod
+    # In a real scenario, this would be a GitHub URL:
+    # source: "git::https://github.com/username/keelo-modules//my-mod?ref=v1.0.0"
+    source: "git::file:///path/to/remote/repo//my-mod"

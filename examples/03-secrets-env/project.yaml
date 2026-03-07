@@ -1,0 +1,6 @@
+project: secret-demo
+modules:
+  - name: app
+    values:
+      APP_ENV: production
+      SECRET_TOKEN: "static-token-from-config"

@@ -1,1 +1,9 @@
 /docs/
+.keelo/
+keelo.lock
+docker-compose.generated.yaml
+project-remote.yaml
+coverage.out
+keelo
+tmp/
+*.exe

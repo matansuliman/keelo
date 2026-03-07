@@ -1,0 +1,6 @@
+project: e2e-test-project
+modules:
+  - name: testmod
+    values:
+      IMAGE_TAG: "v1.2.3"
+      REPLICAS: 2

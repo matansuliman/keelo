@@ -1,0 +1,10 @@
+services:
+  webapp:
+    image: myapp:{{ .Values.APP_ENV }}
+    environment:
+      # Injecting from environment variable with a fallback to module value
+      API_KEY: {{ env "EXTERNAL_API_KEY" | default "empty-key" }}
+      # Injecting a sensitive token
+      TOKEN: {{ .Values.SECRET_TOKEN }}
+      # Demonstrating default filter
+      DEBUG: {{ env "DEBUG_MODE" | default "false" }}

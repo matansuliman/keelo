@@ -1,0 +1,5 @@
+name: postgres
+inputs:
+  USER:
+    type: string
+    default: admin
