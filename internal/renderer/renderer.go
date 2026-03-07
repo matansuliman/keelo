@@ -28,7 +28,20 @@ func RenderModuleTemplate(projectName string, moduleNode *types.ModuleNode, modu
 		return nil, fmt.Errorf("failed to read template for module '%s': %w", moduleDef.Name, err)
 	}
 
-	tmpl, err := template.New(moduleDef.Name).Parse(string(tmplContent))
+	// Define template functions
+	funcMap := template.FuncMap{
+		"env": func(name string) string {
+			return os.Getenv(name)
+		},
+		"default": func(defaultValue interface{}, value interface{}) interface{} {
+			if value == nil || value == "" {
+				return defaultValue
+			}
+			return value
+		},
+	}
+
+	tmpl, err := template.New(moduleDef.Name).Funcs(funcMap).Parse(string(tmplContent))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template for module '%s': %w", moduleDef.Name, err)
 	}

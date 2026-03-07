@@ -76,3 +76,45 @@ func TestRenderModuleTemplate_MissingTemplate(t *testing.T) {
 		t.Errorf("Expected 'module template not found' error, got: %v", err)
 	}
 }
+func TestRenderModuleTemplate_Funcs(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Set a mock environment variable
+	os.Setenv("TEST_KEY", "test-value")
+	defer os.Unsetenv("TEST_KEY")
+
+	modDef := &types.ModuleDefinition{
+		Name:    "func-test",
+		Subpath: tempDir,
+	}
+
+	tmplContent := `
+env_val: {{ env "TEST_KEY" }}
+missing_env: {{ env "DOES_NOT_EXIST" }}
+default_val: {{ "custom" | default "fallback" }}
+fallback_val: {{ "" | default "fallback" }}
+`
+	tmplPath := filepath.Join(tempDir, "compose.yaml.tmpl")
+	os.WriteFile(tmplPath, []byte(tmplContent), 0644)
+
+	modNode := &types.ModuleNode{Name: "func-test"}
+	rendered, err := RenderModuleTemplate("testproj", modNode, modDef)
+	if err != nil {
+		t.Fatalf("Failed to render: %v", err)
+	}
+
+	output := string(rendered.YAML)
+
+	if !strings.Contains(output, "env_val: test-value") {
+		t.Errorf("env function failed. Output: \n%s", output)
+	}
+	if !strings.Contains(output, "missing_env: ") || strings.Contains(output, "DOES_NOT_EXIST") {
+		t.Errorf("missing env should be empty. Output: \n%s", output)
+	}
+	if !strings.Contains(output, "default_val: custom") {
+		t.Errorf("default function failed to keep value. Output: \n%s", output)
+	}
+	if !strings.Contains(output, "fallback_val: fallback") {
+		t.Errorf("default function failed to fallback. Output: \n%s", output)
+	}
+}
