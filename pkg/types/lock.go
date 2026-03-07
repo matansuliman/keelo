@@ -10,4 +10,5 @@ type LockedModule struct {
 	Name     string `yaml:"name"`
 	Source   string `yaml:"source"`
 	Resolved string `yaml:"resolved"` // The local hash or version
+	Checksum string `yaml:"checksum,omitempty"`
 }

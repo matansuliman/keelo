@@ -30,7 +30,7 @@ var diffCmd = &cobra.Command{
 		}
 
 		// 2. Load and Render Modules (In-Memory)
-		loader := modules.NewLoader("modules", ".keelo/cache")
+		loader := modules.NewLoader("modules", ".keelo/cache", false)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)

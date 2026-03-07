@@ -1,9 +1,13 @@
 package modules
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"keelo/pkg/types"
 
@@ -12,18 +16,66 @@ import (
 
 // Loader acts as the module registry and loader.
 type Loader struct {
-	modulesDir string
-	cacheDir   string
-	downloader *Downloader
+	modulesDir   string
+	cacheDir     string
+	downloader   *Downloader
+	forceRefresh bool
 }
 
 // NewLoader creates a new module loader.
-func NewLoader(modulesDir, cacheDir string) *Loader {
+func NewLoader(modulesDir, cacheDir string, forceRefresh bool) *Loader {
 	return &Loader{
-		modulesDir: modulesDir,
-		cacheDir:   cacheDir,
-		downloader: NewDownloader(cacheDir),
+		modulesDir:   modulesDir,
+		cacheDir:     cacheDir,
+		downloader:   NewDownloader(cacheDir),
+		forceRefresh: forceRefresh,
 	}
+}
+
+// HashDirectory calculates a robust SHA256 checksum of all files within a directory block.
+func HashDirectory(dirPath string) (string, error) {
+	hash := sha256.New()
+
+	var files []string
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			relPath, _ := filepath.Rel(dirPath, path)
+			// Skip files that shouldn't affect the module's core integrity (e.g., .git inner contents)
+			// But for cached modules, we might just hash everything except .git
+			if filepath.Base(relPath) == ".git" {
+				return filepath.SkipDir
+			}
+			files = append(files, relPath)
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	sort.Strings(files)
+
+	for _, relPath := range files {
+		fullPath := filepath.Join(dirPath, relPath)
+		f, err := os.Open(fullPath)
+		if err != nil {
+			return "", err
+		}
+		// Write the filepath relative to the module root to the hash (prevents rename exploits)
+		hash.Write([]byte(relPath))
+
+		// Write the file contents into the hash
+		if _, err := io.Copy(hash, f); err != nil {
+			f.Close()
+			return "", err
+		}
+		f.Close()
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 // LoadModule reads and parses the module.yaml file for a given module name from the local modules directory.
@@ -71,7 +123,7 @@ func (l *Loader) LoadProjectModules(cfg *types.ProjectConfig) (map[string]*types
 		if modNode.Source != "" {
 			// Remote module: download first
 			var err error
-			modulePath, err = l.downloader.Download(modNode.Source)
+			modulePath, err = l.downloader.Download(modNode.Source, l.forceRefresh)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load remote module '%s': %w", modNode.Name, err)
 			}

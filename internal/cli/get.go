@@ -25,7 +25,7 @@ var getCmd = &cobra.Command{
 
 		fmt.Printf("Fetching remote modules for project '%s'...\n", cfg.Project)
 
-		loader := modules.NewLoader("modules", ".keelo/cache")
+		loader := modules.NewLoader("modules", ".keelo/cache", false)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("fetching modules: %w", err)

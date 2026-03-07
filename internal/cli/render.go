@@ -28,7 +28,7 @@ var renderCmd = &cobra.Command{
 		}
 
 		// Load Modules
-		loader := modules.NewLoader("modules", ".keelo/cache")
+		loader := modules.NewLoader("modules", ".keelo/cache", false)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)
