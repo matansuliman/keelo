@@ -1,0 +1,13 @@
+services:
+  db-{{ .ProjectName }}:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: {{ .Values.POSTGRES_USER }}
+      POSTGRES_PASSWORD: {{ .Values.POSTGRES_PASSWORD }}
+      POSTGRES_DB: {{ .Values.POSTGRES_DB }}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

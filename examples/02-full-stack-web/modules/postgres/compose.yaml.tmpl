@@ -1,0 +1,6 @@
+services:
+  db-{{ .ProjectName }}:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: {{ .Values.USER }}
+      POSTGRES_PASSWORD: password

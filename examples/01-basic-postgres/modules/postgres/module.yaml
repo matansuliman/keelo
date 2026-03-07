@@ -1,0 +1,13 @@
+name: postgres
+version: 1.0.0
+description: Official PostgreSQL module
+inputs:
+  POSTGRES_USER:
+    type: string
+    default: admin
+  POSTGRES_PASSWORD:
+    type: string
+    required: true
+  POSTGRES_DB:
+    type: string
+    default: myapp

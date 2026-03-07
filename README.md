@@ -31,13 +31,21 @@ A `project.yaml` file that lists which modules you want and what values to give 
 
 ## Installation
 
+### Via Homebrew (macOS/Linux)
+```bash
+brew install matansuliman/tap/keelo
+```
+
+### From GitHub Releases
+Download the latest binary for your OS from the [Releases](https://github.com/matansuliman/keelo/releases) page.
+
+### From Source
 Ensure you have [Go](https://go.dev/doc/install) installed (1.20+ recommended).
 
 ```bash
 git clone https://github.com/matansuliman/keelo.git
 cd keelo
 go build -o keelo ./cmd/tool
-# Add to your PATH
 ```
 
 ---

@@ -1,0 +1,11 @@
+name: api
+inputs:
+  PORT:
+    type: int
+    default: 3000
+  DB_HOST:
+    type: string
+    required: true
+  REDIS_HOST:
+    type: string
+    required: true

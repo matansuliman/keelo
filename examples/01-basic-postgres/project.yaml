@@ -1,0 +1,5 @@
+project: basic-db
+modules:
+  - name: postgres
+    values:
+      POSTGRES_PASSWORD: "verysecretpassword"
