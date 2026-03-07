@@ -17,5 +17,6 @@ type ModuleInput struct {
 	Type        string      `yaml:"type"`
 	Default     interface{} `yaml:"default"`
 	Required    bool        `yaml:"required"`
+	Sensitive   bool        `yaml:"sensitive"`
 	Description string      `yaml:"description"`
 }
