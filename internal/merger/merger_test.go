@@ -150,3 +150,30 @@ services:
 		t.Errorf("Existing environment variable was lost during mixin injection:\n%s", output)
 	}
 }
+
+func TestMergeComposeFragments_CommentPreservation(t *testing.T) {
+	frag := &types.RenderedModule{
+		ModuleName: "postgres",
+		YAML: []byte("# Global service comment\n" +
+			"services:\n" +
+			"  # The database\n" +
+			"  app-postgres:\n" +
+			"    image: postgres:15 # Use pg15 strictly\n"),
+	}
+
+	merged, err := MergeComposeFragments([]*types.RenderedModule{frag}, nil)
+	if err != nil {
+		t.Fatalf("Expected successful merge, got error: %v", err)
+	}
+
+	output := string(merged)
+	if !strings.Contains(output, "# Global service comment") {
+		t.Errorf("Missing global comment in merged output:\n%s", output)
+	}
+	if !strings.Contains(output, "# The database") {
+		t.Errorf("Missing service comment in merged output:\n%s", output)
+	}
+	if !strings.Contains(output, "# Use pg15 strictly") {
+		t.Errorf("Missing inline line comment in merged output:\n%s", output)
+	}
+}
