@@ -1,0 +1,8 @@
+name: app
+inputs:
+  APP_ENV:
+    type: string
+    default: development
+  SECRET_TOKEN:
+    type: string
+    sensitive: true

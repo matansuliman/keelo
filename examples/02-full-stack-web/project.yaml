@@ -1,0 +1,8 @@
+project: myapp
+modules:
+  - name: api
+    values:
+      DB_HOST: db-myapp
+      REDIS_HOST: redis-myapp
+  - name: redis
+  - name: postgres
