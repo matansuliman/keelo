@@ -128,12 +128,5 @@ keelo up
 
 ---
 
-## Roadmap
-*   [x] Phase 1-2: Core Config & Module Loading
-*   [x] Phase 3-4: Template Rendering & YAML Merging
-*   [x] Phase 5-6: Output Generation & Docker Compose Wrappers
-*   [x] Phase 7-8: CLI Polish & E2E Testing
-*   [x] Phase 9: Documentation 🚀
-
 ## License
 MIT
