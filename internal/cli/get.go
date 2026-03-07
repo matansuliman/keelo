@@ -25,7 +25,8 @@ var getCmd = &cobra.Command{
 
 		fmt.Printf("Fetching remote modules for project '%s'...\n", cfg.Project)
 
-		loader := modules.NewLoader("modules", ".keelo/cache", false)
+		forceRefresh, _ := cmd.Flags().GetBool("force-refresh")
+		loader := modules.NewLoader("modules", ".keelo/cache", forceRefresh)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("fetching modules: %w", err)
@@ -41,10 +42,18 @@ var getCmd = &cobra.Command{
 				}
 				// The hash/resolved ID is the last part of the path in the cache
 				resolved := filepath.Base(def.Subpath)
+
+				// Calculate secure directory checksum
+				checksum, err := modules.HashDirectory(def.Subpath)
+				if err != nil {
+					return fmt.Errorf("failed to hash module '%s': %w", modNode.Name, err)
+				}
+
 				lock.Modules = append(lock.Modules, types.LockedModule{
 					Name:     modNode.Name,
 					Source:   modNode.Source,
 					Resolved: resolved,
+					Checksum: checksum,
 				})
 			}
 		}
@@ -63,5 +72,6 @@ var getCmd = &cobra.Command{
 
 func init() {
 	getCmd.Flags().StringP("config", "c", "project.yaml", "Path to project configuration file")
+	getCmd.Flags().Bool("force-refresh", false, "Force re-download of remote modules, bypassing cache")
 	rootCmd.AddCommand(getCmd)
 }

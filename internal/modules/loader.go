@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"keelo/internal/config"
 	"keelo/pkg/types"
 
 	"gopkg.in/yaml.v3"
@@ -113,6 +114,9 @@ func (l *Loader) loadDefinitionFromPath(name, modulePath string) (*types.ModuleD
 func (l *Loader) LoadProjectModules(cfg *types.ProjectConfig) (map[string]*types.ModuleDefinition, error) {
 	loaded := make(map[string]*types.ModuleDefinition)
 
+	// Attempt to load lockfile for cache verification
+	lock, _ := config.LoadLockFile("keelo.lock")
+
 	for _, modNode := range cfg.Modules {
 		// Avoid loading the same module twice
 		if _, exists := loaded[modNode.Name]; exists {
@@ -126,6 +130,23 @@ func (l *Loader) LoadProjectModules(cfg *types.ProjectConfig) (map[string]*types
 			modulePath, err = l.downloader.Download(modNode.Source, l.forceRefresh)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load remote module '%s': %w", modNode.Name, err)
+			}
+
+			// Tamper prevention: verify checksum if lockfile exists and specifies this module
+			if lock != nil && !l.forceRefresh {
+				for _, lockedMod := range lock.Modules {
+					if lockedMod.Name == modNode.Name && lockedMod.Checksum != "" {
+						actualHash, hashErr := HashDirectory(modulePath)
+						if hashErr != nil {
+							return nil, fmt.Errorf("failed to hash cached module for validation: %w", hashErr)
+						}
+						// Strip trailing/leading spaces or just string equate
+						if actualHash != lockedMod.Checksum {
+							return nil, fmt.Errorf("TAMPERING DETECTED: cached module '%s' checksum does not match keelo.lock. Run with --force-refresh to overwrite cache", modNode.Name)
+						}
+						break
+					}
+				}
 			}
 		} else {
 			// Local module: use default path
