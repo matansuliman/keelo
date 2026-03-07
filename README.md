@@ -29,6 +29,16 @@ A `project.yaml` file that lists which modules you want and what values to give 
 
 ---
 
+## Project Structure
+To help contributors navigate the repository:
+*   [**`cmd/`**](cmd/README.md): CLI entry points (the `keelo` binary).
+*   [**`internal/`**](internal/README.md): Core private business logic (CLI routing, Config, Merging, Modules, Templates).
+*   [**`pkg/`**](pkg/README.md): Public shared types (`ProjectConfig`, `ModuleDefinition`).
+*   [**`examples/`**](examples/README.md): Demo projects showcasing Keelo's capabilities.
+*   [**`CONTRIBUTING.md`**](CONTRIBUTING.md): Guidelines for developers who want to contribute code or modules.
+
+---
+
 ## Installation
 
 ### macOS & Linux (via Homebrew)

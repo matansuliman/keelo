@@ -1,16 +1,11 @@
-# Keelo Examples 🚀
+# Example Projects
 
-This directory contains various examples showcasing Keelo's capabilities, from simple setups to complex multi-module infrastructures.
+This directory contains functional examples of how to compose infrastructure using Keelo.
+These are great starting points if you are learning how to use the tool.
 
-## Directory Structure
-- [01-basic-postgres](./01-basic-postgres/): Simple single-module project using PostgreSQL.
-- [02-full-stack-web](./02-full-stack-web/): Multi-module composition with API, Redis, and Database.
-- [03-secrets-env](./03-secrets-env/): Demonstrating environment variable injection and default fallbacks.
-- [04-remote-modules](./04-remote-modules/): Using remote git repositories as module sources.
+## Available Examples
 
-## How to use these examples
-Each example is self-contained. You can run them by navigating to the example directory and running:
-```bash
-keelo render
-```
-The output will be generated in the `generated/` subdirectory of each example.
+*   **`01-basic-postgres`**: The simplest possible example. It loads a single local Postgres module, demonstrates default inputs, and creates a basic database instance.
+*   **`02-full-stack-web`**: A foundational multi-tier architecture. It composes a frontend API service, a Redis caching layer, and a Postgres database, showing how multiple modules work together in a single `project.yaml`.
+*   **`03-secrets-env`**: Demonstrates Keelo's secure environment variable injection. It shows how you can reference secrets in `project.yaml` without hardcoding them into your repository.
+*   **`04-remote-modules`**: Shows off Keelo's package management capabilities by fetching modules directly from a remote Git repository instead of a local folder.
