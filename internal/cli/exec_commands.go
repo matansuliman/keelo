@@ -17,19 +17,18 @@ var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Start the generated Docker Compose project",
 	Long:  `Runs 'docker compose up' using the generated compose file. Defaults to docker-compose.generated.yaml.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if _, err := os.Stat(upComposeFile); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: Generated compose file '%s' not found. Run 'tool render' first.\n", upComposeFile)
-			os.Exit(1)
+			return fmt.Errorf("generated compose file '%s' not found. Run 'keelo render' first", upComposeFile)
 		}
 
 		runner := exec.NewDockerComposeRunner()
 		fmt.Printf("Starting project via docker compose (file: %s)...\n", upComposeFile)
 
 		if err := runner.Up(upComposeFile, upDetach); err != nil {
-			fmt.Fprintf(os.Stderr, "Error starting project: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("starting project: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -39,19 +38,18 @@ var downCmd = &cobra.Command{
 	Use:   "down",
 	Short: "Stop and remove the generated Docker Compose project",
 	Long:  `Runs 'docker compose down' using the generated compose file.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if _, err := os.Stat(downComposeFile); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: Generated compose file '%s' not found.\n", downComposeFile)
-			os.Exit(1)
+			return fmt.Errorf("generated compose file '%s' not found", downComposeFile)
 		}
 
 		runner := exec.NewDockerComposeRunner()
 		fmt.Printf("Stopping project via docker compose (file: %s)...\n", downComposeFile)
 
 		if err := runner.Down(downComposeFile); err != nil {
-			fmt.Fprintf(os.Stderr, "Error stopping project: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("stopping project: %w", err)
 		}
+		return nil
 	},
 }
 
@@ -62,17 +60,16 @@ var logsCmd = &cobra.Command{
 	Use:   "logs",
 	Short: "View logs from the generated Docker Compose project",
 	Long:  `Runs 'docker compose logs' using the generated compose file.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if _, err := os.Stat(logsComposeFile); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: Generated compose file '%s' not found.\n", logsComposeFile)
-			os.Exit(1)
+			return fmt.Errorf("generated compose file '%s' not found", logsComposeFile)
 		}
 
 		runner := exec.NewDockerComposeRunner()
 		if err := runner.Logs(logsComposeFile, logsFollow); err != nil {
-			fmt.Fprintf(os.Stderr, "Error fetching logs: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("fetching logs: %w", err)
 		}
+		return nil
 	},
 }
 

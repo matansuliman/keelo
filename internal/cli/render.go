@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"keelo/internal/compose"
 	"keelo/internal/config"
@@ -22,19 +21,17 @@ var renderCmd = &cobra.Command{
 	Use:   "render",
 	Short: "Render the project configuration into a Docker Compose file",
 	Long:  `Loads the project configuration, resolves modules, validates inputs, and renders a final docker-compose.generated.yaml file.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.LoadProjectConfig(renderConfigPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading project config: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("loading project config: %w", err)
 		}
 
 		// Load Modules
 		loader := modules.NewLoader("modules", ".keelo/cache")
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading modules: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("loading modules: %w", err)
 		}
 
 		// Validation and Rendering
@@ -42,19 +39,16 @@ var renderCmd = &cobra.Command{
 		for i, modNode := range cfg.Modules {
 			def, ok := loadedModules[modNode.Name]
 			if !ok {
-				fmt.Fprintf(os.Stderr, "Error: Module '%s' was not loaded\n", modNode.Name)
-				os.Exit(1)
+				return fmt.Errorf("module '%s' was not loaded", modNode.Name)
 			}
 
 			if err := validator.ValidateModuleInputs(&cfg.Modules[i], def); err != nil {
-				fmt.Fprintf(os.Stderr, "Validation error in module '%s': %v\n", modNode.Name, err)
-				os.Exit(1)
+				return fmt.Errorf("validation error in module '%s': %w", modNode.Name, err)
 			}
 
 			rendered, err := renderer.RenderModuleTemplate(cfg.Project, &cfg.Modules[i], def)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Template rendering error for module '%s': %v\n", modNode.Name, err)
-				os.Exit(1)
+				return fmt.Errorf("template rendering error for module '%s': %w", modNode.Name, err)
 			}
 			fragments = append(fragments, rendered)
 		}
@@ -62,18 +56,17 @@ var renderCmd = &cobra.Command{
 		// Merging
 		mergedOutput, err := merger.MergeComposeFragments(fragments, cfg.Mixins)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Merge error: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("merge error: %w", err)
 		}
 
 		// Writing Output
 		writer := compose.NewOutputWriter(renderOutput)
 		if err := writer.Write(mergedOutput); err != nil {
-			fmt.Fprintf(os.Stderr, "Output error: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("output error: %w", err)
 		}
 
 		fmt.Printf("Successfully rendered project '%s' into %s\n", cfg.Project, renderOutput)
+		return nil
 	},
 }
 
