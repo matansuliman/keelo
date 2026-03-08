@@ -52,15 +52,17 @@ func HashDirectory(dirPath string) (string, error) {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() {
-			relPath, _ := filepath.Rel(dirPath, path)
-			// Skip files that shouldn't affect the module's core integrity (e.g., .git inner contents)
-			// But for cached modules, we might just hash everything except .git
-			if filepath.Base(relPath) == ".git" {
+
+		// Properly skip .git directories entirely
+		if info.IsDir() {
+			if info.Name() == ".git" {
 				return filepath.SkipDir
 			}
-			files = append(files, relPath)
+			return nil
 		}
+
+		relPath, _ := filepath.Rel(dirPath, path)
+		files = append(files, relPath)
 		return nil
 	})
 	if err != nil {
