@@ -20,7 +20,8 @@ Managing Docker Compose for multiple microservices or complex environments often
 ### 1. The Module (The Building Block) 🧱
 A folder containing a schema (`module.yaml`) and a template (`compose.yaml.tmpl`). 
 - **Purpose**: Defines *how* a specific service should run.
-- **Reusability**: You create it once in your `modules/` library and use it forever.
+- **Reusability**: You create it once in your local `modules/` folder, or you can fetch **remote modules** directly from GitHub (e.g., `source: matansuliman/postgres`).
+- **Global Registry**: Remote modules act like Docker images. They are fetched globally to `~/.cache/keelo/modules` so you can use the same remote module across 10 different projects without re-downloading!
 
 ### 2. The Project (The Assembly) 🏗️
 A `project.yaml` file that lists which modules you want and what values to give them.

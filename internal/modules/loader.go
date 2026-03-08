@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"keelo/internal/config"
 	"keelo/pkg/types"
@@ -21,6 +22,15 @@ type Loader struct {
 	cacheDir     string
 	downloader   *Downloader
 	forceRefresh bool
+}
+
+// DefaultCacheDir returns the global cache directory for Keelo modules.
+func DefaultCacheDir() string {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return ".keelo/cache" // Fallback to local if UserCacheDir fails
+	}
+	return filepath.Join(dir, "keelo", "modules")
 }
 
 // NewLoader creates a new module loader.
@@ -110,67 +120,86 @@ func (l *Loader) loadDefinitionFromPath(name, modulePath string) (*types.ModuleD
 	return &def, nil
 }
 
+// resolveSource expands a shorthand name or source into a canonical go-getter URL.
+func resolveSource(name, source string) string {
+	if source == "" {
+		if strings.Contains(name, "/") {
+			return "github.com/" + name
+		}
+		return ""
+	}
+
+	// Expand shorthand sources like "matansuliman/postgres"
+	if !strings.Contains(source, "://") && !strings.HasPrefix(source, "git::") && !strings.HasPrefix(source, "github.com/") {
+		if strings.Contains(source, "/") {
+			return "github.com/" + source
+		}
+	}
+	return source
+}
+
 // LoadProjectModules loads all module definitions referenced by a project configuration, pulling remote ones if needed.
 func (l *Loader) LoadProjectModules(cfg *types.ProjectConfig) (map[string]*types.ModuleDefinition, error) {
 	loaded := make(map[string]*types.ModuleDefinition)
-
-	// Attempt to load lockfile for cache verification
 	lock, _ := config.LoadLockFile("keelo.lock")
 
 	for _, modNode := range cfg.Modules {
-		// Avoid loading the same module twice
-		if _, exists := loaded[modNode.Name]; exists {
-			continue
-		}
-
-		var modulePath string
-		if modNode.Source != "" {
-			// Remote module: download first
-			var err error
-			modulePath, err = l.downloader.Download(modNode.Source, l.forceRefresh)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load remote module '%s': %w", modNode.Name, err)
-			}
-
-			// Tamper prevention: verify checksum if lockfile exists and specifies this module
-			if lock != nil && !l.forceRefresh {
-				for _, lockedMod := range lock.Modules {
-					if lockedMod.Name == modNode.Name && lockedMod.Checksum != "" {
-						actualHash, hashErr := HashDirectory(modulePath)
-						if hashErr != nil {
-							return nil, fmt.Errorf("failed to hash cached module for validation: %w", hashErr)
-						}
-						// Strip trailing/leading spaces or just string equate
-						if actualHash != lockedMod.Checksum {
-							return nil, fmt.Errorf("TAMPERING DETECTED: cached module '%s' checksum does not match keelo.lock. Run with --force-refresh to overwrite cache", modNode.Name)
-						}
-						break
-					}
-				}
-			}
-		} else {
-			// Local module: use default path
-			modulePath = filepath.Join(l.modulesDir, modNode.Name)
-		}
-
-		def, err := l.loadDefinitionFromPath(modNode.Name, modulePath)
-		if err != nil {
+		if err := l.resolveAndLoad(modNode.Name, modNode.Source, loaded, lock); err != nil {
 			return nil, err
-		}
-		loaded[modNode.Name] = def
-
-		// Load dependencies (local only for now, as dependencies don't have 'source' in their module.yaml yet)
-		// Future improvement: support remote dependencies in module.yaml
-		for _, dep := range def.Dependencies {
-			if _, exists := loaded[dep]; !exists {
-				depDef, err := l.LoadModule(dep)
-				if err != nil {
-					return nil, fmt.Errorf("failed to load dependency '%s' for module '%s': %w", dep, def.Name, err)
-				}
-				loaded[dep] = depDef
-			}
 		}
 	}
 
 	return loaded, nil
+}
+
+// resolveAndLoad is a recursive helper to load a module and its dependencies.
+func (l *Loader) resolveAndLoad(name string, source string, loaded map[string]*types.ModuleDefinition, lock *types.LockFile) error {
+	if _, exists := loaded[name]; exists {
+		return nil // already loaded
+	}
+
+	actualSource := resolveSource(name, source)
+	var modulePath string
+
+	if actualSource != "" {
+		// Remote module logic
+		var err error
+		modulePath, err = l.downloader.Download(actualSource, l.forceRefresh)
+		if err != nil {
+			return fmt.Errorf("failed to load remote module '%s': %w", name, err)
+		}
+
+		if lock != nil && !l.forceRefresh {
+			for _, lockedMod := range lock.Modules {
+				if lockedMod.Name == name && lockedMod.Checksum != "" {
+					actualHash, hashErr := HashDirectory(modulePath)
+					if hashErr != nil {
+						return fmt.Errorf("failed to hash cached module for validation: %w", hashErr)
+					}
+					if actualHash != lockedMod.Checksum {
+						return fmt.Errorf("TAMPERING DETECTED: cached module '%s' checksum does not match keelo.lock. Run with --force-refresh to overwrite cache", name)
+					}
+					break
+				}
+			}
+		}
+	} else {
+		// Local module logic
+		modulePath = filepath.Join(l.modulesDir, name)
+	}
+
+	def, err := l.loadDefinitionFromPath(name, modulePath)
+	if err != nil {
+		return err
+	}
+	loaded[name] = def
+
+	// Load dependencies recursively (they can now be remote shorthands)
+	for _, dep := range def.Dependencies {
+		if err := l.resolveAndLoad(dep, "", loaded, lock); err != nil {
+			return fmt.Errorf("failed to load dependency '%s' for module '%s': %w", dep, name, err)
+		}
+	}
+
+	return nil
 }

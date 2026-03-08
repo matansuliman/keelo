@@ -44,6 +44,8 @@ func (d *Downloader) Download(source string, forceRefresh bool) (string, error) 
 		return "", fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
+	fmt.Printf("\nPulling %s...\n", source)
+
 	// Use hashicorp/go-getter to fetch the module
 	client := &getter.Client{
 		Src:  source,
