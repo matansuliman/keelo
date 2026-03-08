@@ -3,9 +3,11 @@ package modules
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
-	"keelo/pkg/types"
+	"github.com/matansuliman/keelo/pkg/types"
 )
 
 func TestLoader_LoadModule(t *testing.T) {
@@ -89,5 +91,93 @@ name: postgres
 	}
 	if _, ok := loaded["postgres"]; !ok {
 		t.Errorf("Expected 'postgres' to be loaded")
+	}
+}
+
+func TestLoader_LoadRemoteProjectModules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping remote load test in short mode")
+	}
+
+	cacheDir := t.TempDir()
+
+	// Ensure cleanup
+	defer func() {
+		os.RemoveAll(cacheDir)
+	}()
+
+	loader := NewLoader(t.TempDir(), cacheDir, false)
+
+	cfg := &types.ProjectConfig{
+		Project: "test-remote-proj",
+		Modules: []types.ModuleNode{
+			{
+				Name:   "remote-postgres",
+				Source: "git::https://github.com/matansuliman/keelo-modules//base-postgres",
+			},
+		},
+	}
+
+	// Loading process should fetch the module and cache it
+	t.Logf("Attempting to load remote modules into cache dir: %s", cacheDir)
+
+	start := time.Now()
+	loaded, err := loader.LoadProjectModules(cfg)
+	t.Logf("Finished loading remote modules. Took: %v", time.Since(start))
+
+	if err != nil {
+		t.Fatalf("Failed to load remote project modules: %v", err)
+	}
+
+	if len(loaded) != 1 {
+		t.Fatalf("Expected 1 remote module loaded, got %d", len(loaded))
+	}
+
+	remoteMod, ok := loaded["remote-postgres"]
+	if !ok {
+		t.Fatalf("Expected 'remote-postgres' to be loaded")
+	}
+
+	// Verify loaded properties
+	if remoteMod.Name != "base-postgres" {
+		t.Errorf("Expected base-postgres schema name, got '%s'", remoteMod.Name)
+	}
+
+	if input, ok := remoteMod.Inputs["DB_NAME"]; !ok {
+		t.Errorf("Expected remote DB_NAME input, but it was missing")
+	} else if !input.Required {
+		t.Errorf("Expected remote DB_NAME to be required")
+	}
+
+	// Verify cache directory was populated
+	entries, err := os.ReadDir(cacheDir)
+	if err != nil {
+		t.Fatalf("Failed to read cache dir: %v", err)
+	}
+
+	if len(entries) == 0 {
+		t.Errorf("Expected cache dir %s to contain downloaded module, but it was empty", cacheDir)
+	}
+
+	foundRemote := false
+	for _, e := range entries {
+		if strings.Contains(e.Name(), "github.com") {
+			foundRemote = true
+
+			// Verify module files exist inside the cached path
+			modYamlPath := filepath.Join(cacheDir, e.Name(), "base-postgres", "module.yaml")
+			if _, err := os.Stat(modYamlPath); os.IsNotExist(err) {
+				t.Errorf("Cached remote module.yaml not found at expected path: %s", modYamlPath)
+			}
+			tmplPath := filepath.Join(cacheDir, e.Name(), "base-postgres", "compose.yaml.tmpl")
+			if _, err := os.Stat(tmplPath); os.IsNotExist(err) {
+				t.Errorf("Cached remote template not found at expected path: %s", tmplPath)
+			}
+			break
+		}
+	}
+
+	if !foundRemote {
+		t.Errorf("Expected to find a domain-prefixed folder in cache dir, contents: %v", entries)
 	}
 }
