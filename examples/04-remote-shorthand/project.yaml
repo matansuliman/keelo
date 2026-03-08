@@ -1,0 +1,6 @@
+project: remote-shorthand-test
+modules:
+  - name: matansuliman/keelo-remote-modules-demo//postgres
+    inputs:
+      POSTGRES_DB: remote_db
+      POSTGRES_PASSWORD: secret
