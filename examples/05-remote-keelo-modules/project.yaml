@@ -1,0 +1,14 @@
+project: remote-modules-demo
+modules:
+  - name: my-db
+    source: "git::https://github.com/matansuliman/keelo-modules//base-postgres"
+    values:
+      DB_NAME: "demo_db"
+      VERSION: "15-alpine"
+      PORT: 5433
+
+  - name: my-cache
+    source: "git::https://github.com/matansuliman/keelo-modules//base-redis"
+    values:
+      VERSION: "7-alpine"
+      PORT: 6380

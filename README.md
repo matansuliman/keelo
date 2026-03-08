@@ -22,6 +22,7 @@ A folder containing a schema (`module.yaml`) and a template (`compose.yaml.tmpl`
 - **Purpose**: Defines *how* a specific service should run.
 - **Reusability**: You create it once in your local `modules/` folder, or you can fetch **remote modules** directly from GitHub (e.g., `source: matansuliman/postgres`).
 - **Global Registry**: Remote modules act like Docker images. They are fetched globally to `~/.cache/keelo/modules` so you can use the same remote module across 10 different projects without re-downloading!
+- **Remote Registry**: You can pull standard modules directly from the official remote registry at [matansuliman/keelo-modules](https://github.com/matansuliman/keelo-modules).
 
 ### 2. The Project (The Assembly) 🏗️
 A `project.yaml` file that lists which modules you want and what values to give them.
@@ -108,7 +109,7 @@ volumes:
 ```
 
 ### 2. Assembly your Project
-Now, instead of writing 15 lines of Postgres YAML, you just "call" your module in `project.yaml`.
+Now, instead of writing 15 lines of Postgres YAML, you just "call" your module in `project.yaml`. You can use a local module or a remote one.
 
 Run the interactive `init` command to bootstrap your configuration:
 ```bash
@@ -121,6 +122,7 @@ Modify **`project.yaml`**:
 project: my-awesome-app
 modules:
   - name: postgres
+    source: "git::https://github.com/matansuliman/keelo-modules//base-postgres" # Omit source if using a local module
     values:
       DB_NAME: "user_service_db"
 ```
