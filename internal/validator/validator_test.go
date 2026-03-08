@@ -19,6 +19,14 @@ func TestValidateModuleInputs(t *testing.T) {
 				Required: false,
 				Default:  8080,
 			},
+			"UNSUPPORTED": {
+				Type:     "list",
+				Required: false,
+			},
+			"BOOL_FLAG": {
+				Type:     "bool",
+				Required: false,
+			},
 		},
 	}
 
@@ -61,6 +69,30 @@ func TestValidateModuleInputs(t *testing.T) {
 					t.Errorf("Expected 'invalid type' error, got: %v", err)
 				}
 			},
+		},
+		{
+			name: "Float resolving to int",
+			inputVals: map[string]interface{}{
+				"REQ_STR": "my-value",
+				"OPT_DEF": float64(42.0), // YAML unmarshals sometimes read bare ints as float64
+			},
+			expectError: false,
+		},
+		{
+			name: "Unsupported type passes through",
+			inputVals: map[string]interface{}{
+				"REQ_STR":     "my-value",
+				"UNSUPPORTED": []string{"hello", "world"},
+			},
+			expectError: false,
+		},
+		{
+			name: "Valid bool flag",
+			inputVals: map[string]interface{}{
+				"REQ_STR":   "my-value",
+				"BOOL_FLAG": true,
+			},
+			expectError: false,
 		},
 	}
 

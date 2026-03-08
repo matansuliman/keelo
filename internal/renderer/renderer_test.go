@@ -118,3 +118,57 @@ fallback_val: {{ "" | default "fallback" }}
 		t.Errorf("default function failed to fallback. Output: \n%s", output)
 	}
 }
+
+func TestRenderModuleTemplate_ParseError(t *testing.T) {
+	tempDir := t.TempDir()
+
+	modDef := &types.ModuleDefinition{
+		Name:    "bad-parse",
+		Subpath: tempDir,
+	}
+
+	// Unclosed template action
+	tmplContent := `
+services:
+  myapp:
+    image: {{ unclosed_action
+`
+	tmplPath := filepath.Join(tempDir, "compose.yaml.tmpl")
+	os.WriteFile(tmplPath, []byte(tmplContent), 0644)
+
+	modNode := &types.ModuleNode{Name: "bad-parse"}
+	_, err := RenderModuleTemplate("testproj", modNode, modDef)
+	if err == nil {
+		t.Fatal("Expected parse error, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed to parse template") {
+		t.Errorf("Expected 'failed to parse template' error, got: %v", err)
+	}
+}
+
+func TestRenderModuleTemplate_ExecuteError(t *testing.T) {
+	tempDir := t.TempDir()
+
+	modDef := &types.ModuleDefinition{
+		Name:    "bad-exec",
+		Subpath: tempDir,
+	}
+
+	// Valid syntax, but invalid runtime execution (accessing unexported method or invalid field)
+	tmplContent := `
+services:
+  myapp:
+    image: {{ .NonExistentField.Deep }}
+`
+	tmplPath := filepath.Join(tempDir, "compose.yaml.tmpl")
+	os.WriteFile(tmplPath, []byte(tmplContent), 0644)
+
+	modNode := &types.ModuleNode{Name: "bad-exec"}
+	_, err := RenderModuleTemplate("testproj", modNode, modDef)
+	if err == nil {
+		t.Fatal("Expected execute error, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed to execute template") {
+		t.Errorf("Expected 'failed to execute template' error, got: %v", err)
+	}
+}
