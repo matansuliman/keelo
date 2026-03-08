@@ -3,7 +3,6 @@ package modules
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -161,15 +160,16 @@ func TestLoader_LoadRemoteProjectModules(t *testing.T) {
 
 	foundRemote := false
 	for _, e := range entries {
-		if strings.Contains(e.Name(), "github.com") {
+		if len(e.Name()) == 12 { // It's a 12-character hash directory
 			foundRemote = true
 
 			// Verify module files exist inside the cached path
-			modYamlPath := filepath.Join(cacheDir, e.Name(), "base-postgres", "module.yaml")
+			// go-getter extracts the subdirectory contents directly into the target dst dir
+			modYamlPath := filepath.Join(cacheDir, e.Name(), "module.yaml")
 			if _, err := os.Stat(modYamlPath); os.IsNotExist(err) {
 				t.Errorf("Cached remote module.yaml not found at expected path: %s", modYamlPath)
 			}
-			tmplPath := filepath.Join(cacheDir, e.Name(), "base-postgres", "compose.yaml.tmpl")
+			tmplPath := filepath.Join(cacheDir, e.Name(), "compose.yaml.tmpl")
 			if _, err := os.Stat(tmplPath); os.IsNotExist(err) {
 				t.Errorf("Cached remote template not found at expected path: %s", tmplPath)
 			}
@@ -178,6 +178,6 @@ func TestLoader_LoadRemoteProjectModules(t *testing.T) {
 	}
 
 	if !foundRemote {
-		t.Errorf("Expected to find a domain-prefixed folder in cache dir, contents: %v", entries)
+		t.Errorf("Expected to find a hash-named folder in cache dir, contents: %v", entries)
 	}
 }
