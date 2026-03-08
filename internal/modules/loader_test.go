@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/matansuliman/keelo/pkg/types"
+	"keelo/pkg/types"
 )
 
 func TestLoader_LoadModule(t *testing.T) {
