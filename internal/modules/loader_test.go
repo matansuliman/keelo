@@ -3,6 +3,7 @@ package modules
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -58,6 +59,39 @@ inputs:
 		if !input.Required {
 			t.Errorf("Expected POSTGRES_DB to be required")
 		}
+	}
+}
+
+func TestLoader_LoadCorruptedModule(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create a mock module 'corrupted'
+	badDir := filepath.Join(tempDir, "corrupted")
+	if err := os.Mkdir(badDir, 0755); err != nil {
+		t.Fatalf("Failed to create corrupted dir: %v", err)
+	}
+
+	// Invalid YAML content
+	badYaml := `
+name: corrupted
+version: 1.0.0
+inputs:
+  - invalid_sequence_for_map
+  - another_bad_item
+`
+	if err := os.WriteFile(filepath.Join(badDir, "module.yaml"), []byte(badYaml), 0644); err != nil {
+		t.Fatalf("Failed to write corrupted module.yaml: %v", err)
+	}
+
+	loader := NewLoader(tempDir, t.TempDir(), false)
+
+	_, err := loader.LoadModule("corrupted")
+	if err == nil {
+		t.Fatalf("Expected LoadModule to fail on invalid YAML, but got nil error")
+	}
+
+	if !strings.Contains(err.Error(), "invalid YAML") {
+		t.Errorf("Expected error to mention 'invalid YAML', got: %v", err)
 	}
 }
 

@@ -61,6 +61,16 @@ modules:
 			},
 		},
 		{
+			name:        "Empty Directory Project File Missing",
+			path:        filepath.Join(t.TempDir(), "project.yaml"),
+			expectError: true,
+			check: func(t *testing.T, err error) {
+				if err == nil || !contains(err.Error(), "project config file not found") {
+					t.Errorf("Expected 'project config file not found' error, got: %v", err)
+				}
+			},
+		},
+		{
 			name:        "Invalid YAML Structure",
 			path:        invalidConfigPath,
 			expectError: true,

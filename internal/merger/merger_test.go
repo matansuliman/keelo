@@ -50,6 +50,50 @@ volumes:
 	}
 }
 
+func TestMergeComposeFragments_NestedEnvVars(t *testing.T) {
+	frag1 := &types.RenderedModule{
+		ModuleName: "app1",
+		YAML: []byte(`
+services:
+  myapp:
+    environment:
+      SHARED_ENV: "app1_value"
+      APP1_ONLY: "true"
+`),
+	}
+
+	frag2 := &types.RenderedModule{
+		ModuleName: "app2",
+		YAML: []byte(`
+services:
+  myapp:
+    environment:
+      SHARED_ENV: "app2_value"
+      APP2_ONLY: "true"
+`),
+	}
+
+	merged, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
+	if err != nil {
+		t.Fatalf("Expected successful merge, got error: %v", err)
+	}
+
+	output := string(merged)
+
+	// Ensure both unique env vars exist
+	if !strings.Contains(output, "APP1_ONLY: \"true\"") {
+		t.Errorf("Missing APP1_ONLY env var in merged output:\n%s", output)
+	}
+	if !strings.Contains(output, "APP2_ONLY: \"true\"") {
+		t.Errorf("Missing APP2_ONLY env var in merged output:\n%s", output)
+	}
+
+	// SHARED_ENV will be overwritten by the last fragment (frag2) due to map merging
+	if !strings.Contains(output, "SHARED_ENV: app2_value") {
+		t.Errorf("Expected SHARED_ENV to be 'app2_value', got something else in merged output:\n%s", output)
+	}
+}
+
 func TestMergeComposeFragments_ServiceConflict(t *testing.T) {
 	frag1 := &types.RenderedModule{
 		ModuleName: "api1",
