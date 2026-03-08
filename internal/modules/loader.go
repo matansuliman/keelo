@@ -170,17 +170,8 @@ func (l *Loader) resolveAndLoad(name string, source string, loaded map[string]*t
 		}
 
 		if lock != nil && !l.forceRefresh {
-			for _, lockedMod := range lock.Modules {
-				if lockedMod.Name == name && lockedMod.Checksum != "" {
-					actualHash, hashErr := HashDirectory(modulePath)
-					if hashErr != nil {
-						return fmt.Errorf("failed to hash cached module for validation: %w", hashErr)
-					}
-					if actualHash != lockedMod.Checksum {
-						return fmt.Errorf("TAMPERING DETECTED: cached module '%s' checksum does not match keelo.lock. Run with --force-refresh to overwrite cache", name)
-					}
-					break
-				}
+			if err := verifyChecksum(modulePath, name, lock); err != nil {
+				return err
 			}
 		}
 	} else {
@@ -201,5 +192,22 @@ func (l *Loader) resolveAndLoad(name string, source string, loaded map[string]*t
 		}
 	}
 
+	return nil
+}
+
+// verifyChecksum checks if a downloaded module matches the checksum in the lock file.
+func verifyChecksum(modulePath, name string, lock *types.LockFile) error {
+	for _, lockedMod := range lock.Modules {
+		if lockedMod.Name == name && lockedMod.Checksum != "" {
+			actualHash, hashErr := HashDirectory(modulePath)
+			if hashErr != nil {
+				return fmt.Errorf("failed to hash cached module for validation: %w", hashErr)
+			}
+			if actualHash != lockedMod.Checksum {
+				return fmt.Errorf("TAMPERING DETECTED: cached module '%s' checksum does not match keelo.lock. Run with --force-refresh to overwrite cache", name)
+			}
+			break
+		}
+	}
 	return nil
 }
