@@ -64,21 +64,8 @@ func mergeMappingNodes(dst *yaml.Node, src *yaml.Node, moduleName string, path s
 			// Append both key and value nodes
 			dst.Content = append(dst.Content, srcKeyNode, srcValNode)
 		} else {
-			// Key exists in dst
-			// Check for explicit conflicts before recursing into children
-			if path == "services" {
-				return fmt.Errorf("conflict detected: service '%s' is defined multiple times (seen in module '%s')", srcKey, moduleName)
-			}
-			if path == "volumes" {
-				if !isEmptyNode(dstValNode) || !isEmptyNode(srcValNode) {
-					return fmt.Errorf("conflict detected: volume '%s' is defined multiple times with options (seen in module '%s')", srcKey, moduleName)
-				}
-			}
-			if path == "networks" {
-				if !isEmptyNode(dstValNode) || !isEmptyNode(srcValNode) {
-					return fmt.Errorf("conflict detected: network '%s' is defined multiple times with options (seen in module '%s')", srcKey, moduleName)
-				}
-			}
+			// Key exists in dst. We allow recursive merging for services, volumes, and networks.
+			// This enables "Strategic Merging" where multiple modules can contribute to the same component.
 
 			if dstValNode.Kind == yaml.MappingNode && srcValNode.Kind == yaml.MappingNode {
 				newPath := srcKey

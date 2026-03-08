@@ -94,13 +94,15 @@ services:
 	}
 }
 
-func TestMergeComposeFragments_ServiceConflict(t *testing.T) {
+func TestMergeComposeFragments_StrategicMerge(t *testing.T) {
 	frag1 := &types.RenderedModule{
 		ModuleName: "api1",
 		YAML: []byte(`
 services:
   api:
     image: api:v1
+    environment:
+      VAR1: "true"
 `),
 	}
 
@@ -110,20 +112,33 @@ services:
 services:
   api:
     image: api:v2
+    environment:
+      VAR2: "true"
 `),
 	}
 
-	_, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
-	if err == nil {
-		t.Fatalf("Expected error for service name conflict, got nil")
+	merged, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
+	if err != nil {
+		t.Fatalf("Expected successful merge, got error: %v", err)
 	}
 
-	if !strings.Contains(err.Error(), "conflict detected: service 'api' is defined multiple times") {
-		t.Errorf("Expected conflict error message, got: %v", err)
+	output := string(merged)
+
+	// Ensure both contributing env vars exist (Nested Merging)
+	if !strings.Contains(output, "VAR1: \"true\"") {
+		t.Errorf("Missing VAR1 in merged output:\n%s", output)
+	}
+	if !strings.Contains(output, "VAR2: \"true\"") {
+		t.Errorf("Missing VAR2 in merged output:\n%s", output)
+	}
+
+	// Scalar field (image) should be overwritten by the last fragment
+	if !strings.Contains(output, "image: api:v2") {
+		t.Errorf("Expected image api:v2, got something else in merged output:\n%s", output)
 	}
 }
 
-func TestMergeComposeFragments_VolumeConflict(t *testing.T) {
+func TestMergeComposeFragments_VolumeMerge(t *testing.T) {
 	frag1 := &types.RenderedModule{
 		ModuleName: "api1",
 		YAML: []byte(`
@@ -138,17 +153,22 @@ volumes:
 		YAML: []byte(`
 volumes:
   shared-data:
-    driver: other
+    driver_opts:
+      type: nfs
 `),
 	}
 
-	_, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
-	if err == nil {
-		t.Fatalf("Expected error for volume block conflict, got nil")
+	merged, err := MergeComposeFragments([]*types.RenderedModule{frag1, frag2}, nil)
+	if err != nil {
+		t.Fatalf("Expected successful merge, got error: %v", err)
 	}
 
-	if !strings.Contains(err.Error(), "conflict detected: volume 'shared-data' is defined multiple times with options") {
-		t.Errorf("Expected conflict error message, got: %v", err)
+	output := string(merged)
+	if !strings.Contains(output, "driver: local") {
+		t.Errorf("Missing driver in merged volumes:\n%s", output)
+	}
+	if !strings.Contains(output, "driver_opts:") {
+		t.Errorf("Missing driver_opts in merged volumes:\n%s", output)
 	}
 }
 
