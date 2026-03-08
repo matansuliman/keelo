@@ -31,7 +31,7 @@ var diffCmd = &cobra.Command{
 
 		// 2. Load and Render Modules (In-Memory)
 		forceRefresh, _ := cmd.Flags().GetBool("force-refresh")
-		loader := modules.NewLoader("modules", ".keelo/cache", forceRefresh)
+		loader := modules.NewLoader("modules", modules.DefaultCacheDir(), forceRefresh)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)

@@ -29,7 +29,7 @@ var renderCmd = &cobra.Command{
 
 		// Load Modules
 		forceRefresh, _ := cmd.Flags().GetBool("force-refresh")
-		loader := modules.NewLoader("modules", ".keelo/cache", forceRefresh)
+		loader := modules.NewLoader("modules", modules.DefaultCacheDir(), forceRefresh)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)

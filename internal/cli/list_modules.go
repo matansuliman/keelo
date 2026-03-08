@@ -27,7 +27,7 @@ var listModulesCmd = &cobra.Command{
 			return fmt.Errorf("reading %s directory: %w", modulesDir, err)
 		}
 
-		loader := modules.NewLoader(modulesDir, ".keelo/cache", false)
+		loader := modules.NewLoader(modulesDir, modules.DefaultCacheDir(), false)
 		foundAny := false
 
 		// Use tabwriter for nice alignment

@@ -27,7 +27,7 @@ var validateCmd = &cobra.Command{
 		}
 
 		// Assume modules are in "modules" folder by default (can be configurable later)
-		loader := modules.NewLoader("modules", ".keelo/cache", false)
+		loader := modules.NewLoader("modules", modules.DefaultCacheDir(), false)
 		loadedModules, err := loader.LoadProjectModules(cfg)
 		if err != nil {
 			return fmt.Errorf("loading modules: %w", err)
